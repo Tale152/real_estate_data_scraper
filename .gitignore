@@ -1,3 +1,5 @@
+project/target/
+
 ### Intellij ###
 .idea/
 out/
