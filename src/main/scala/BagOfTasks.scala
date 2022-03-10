@@ -7,12 +7,8 @@ object BagOfTasks{
   def createBagOfTasks(city: String): util.HashSet[Task] = {
     val bagOfTasks = new util.HashSet[Task]()
     for (i <- 1 to 2){
-      val htmlPage = Http(createHouseListUrl(city, i)).header("Content-Type", "text/html").header("Charset", "UTF-8")
-        .asString
-        .body
-      val pattern = "href=\"https://www.immobiliare.it/annunci/[0-9]*/\"".r
-      val matched = pattern findAllMatchIn htmlPage
-      matched.foreach(m => bagOfTasks.add(CompleteScrapingTask(extractIdFromHouseHref(m.toString()))))
+      val idSeq = Util.extractIdSeq(createHouseListUrl(city, i))
+      idSeq.foreach(id => bagOfTasks.add(CompleteScrapingTask(id)))
     }
     bagOfTasks
   }
@@ -24,10 +20,5 @@ object BagOfTasks{
       "https://www.immobiliare.it/vendita-case/" + city + "/?criterio=dataModifica&ordine=desc&pag=" + i
     }
   }
-
-  private def extractIdFromHouseHref(href: String): Long = href
-    .replace("href=\"https://www.immobiliare.it/annunci/", "")
-    .replace("/\"", "")
-    .toLong
 
 }
