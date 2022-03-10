@@ -1,6 +1,5 @@
-import org.htmlcleaner.HtmlCleaner
+import scalaj.http.Http
 
-import java.net.URL
 import java.util
 
 object BagOfTasks{
@@ -8,26 +7,27 @@ object BagOfTasks{
   def createBagOfTasks(city: String): util.HashSet[Task] = {
     val bagOfTasks = new util.HashSet[Task]()
     for (i <- 1 to 2){
-      val houseList = new HtmlCleaner()
-        .clean(createHouseListUrl(city, i))
-        .findElementByName("body", false)
-        .findElementByAttValue("class", "nd-list in-realEstateResults", true, true)
-      if(houseList != null){
-        houseList
-          .getElementsByName("a", true)
-          .map(e => extractIdFromHouseUrl(e.getAttributeByName("href")))
-          .foreach(id => bagOfTasks.add(CompleteScrapingTask(id)))
-      }
+      val htmlPage = Http(createHouseListUrl(city, i)).header("Content-Type", "text/html").header("Charset", "UTF-8")
+        .asString
+        .body
+      val pattern = "href=\"https://www.immobiliare.it/annunci/[0-9]*/\"".r
+      val matched = pattern findAllMatchIn htmlPage
+      matched.foreach(m => bagOfTasks.add(CompleteScrapingTask(extractIdFromHouseHref(m.toString()))))
     }
     bagOfTasks
   }
 
-  private def createHouseListUrl(city: String, i: Int): URL =
-    new URL("https://www.immobiliare.it/vendita-case/" + city + "/?criterio=dataModifica&ordine=desc&pag=" + i)
+  private def createHouseListUrl(city: String, i: Int): String = {
+    if(i == 1){
+      "https://www.immobiliare.it/vendita-case/" + city + "/?criterio=dataModifica&ordine=desc"
+    } else {
+      "https://www.immobiliare.it/vendita-case/" + city + "/?criterio=dataModifica&ordine=desc&pag=" + i
+    }
+  }
 
-  private def extractIdFromHouseUrl(url: String): Long = url
-    .replace("https://www.immobiliare.it/annunci/", "")
-    .replace("/", "")
+  private def extractIdFromHouseHref(href: String): Long = href
+    .replace("href=\"https://www.immobiliare.it/annunci/", "")
+    .replace("/\"", "")
     .toLong
 
 }
