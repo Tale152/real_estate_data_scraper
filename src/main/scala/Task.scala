@@ -10,6 +10,12 @@ case class CompleteScrapingTask(private val id: Long) extends Task{
       .asString
       .body
 
-    Util.extractHouseDate(htmlPage)
+    println(Util.extractHouseDate(htmlPage).toString)
+  }
+}
+
+case class PartialScrapingTask(private val html: String) extends Task{
+  override def call(): Unit = {
+    println(Util.extractHouseDate(html).toString)
   }
 }

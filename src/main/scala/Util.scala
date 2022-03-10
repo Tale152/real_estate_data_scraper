@@ -1,4 +1,3 @@
-import BagOfTasks.createHouseListUrl
 import scalaj.http.Http
 
 import java.time.LocalDate
@@ -16,6 +15,11 @@ object Util {
   private val dateSecondRegex = date.r
   private val format = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
+  def getHtmlString(id: Long): String = Http("https://www.immobiliare.it/annunci/" + id + "/")
+      .header("Content-Type", "text/html").header("Charset", "UTF-8")
+      .asString
+      .body
+
   def extractIdSeq(url: String): Seq[Long] = {
     val htmlPage = Http(url).header("Content-Type", "text/html").header("Charset", "UTF-8").asString.body
     (idHrefPattern findAllMatchIn htmlPage).toSeq.map(idHrefMatch => extractId(idHrefMatch))
@@ -26,15 +30,15 @@ object Util {
     .replace("/\"", "")
     .toLong
 
-  def extractHouseDate(html: String): Option[LocalDate] = {
+  def extractHouseDate(html: String): LocalDate = {
     val firstFilter = dateFirstRegex findFirstIn html
     if(firstFilter.isDefined){
       val secondFilter = dateSecondRegex findFirstIn firstFilter.get
       if(secondFilter.isDefined){
-        return Some(LocalDate.parse(secondFilter.get, format))
+        return LocalDate.parse(secondFilter.get, format)
       }
     }
-    None
+    throw new IllegalStateException("Cannot extract house date")
   }
 
 }
