@@ -1,5 +1,6 @@
 package immobiliareIt
 
+import com.google.gson.{Gson, JsonObject, JsonParser}
 import scalaj.http.Http
 
 import java.time.LocalDate
@@ -28,6 +29,18 @@ object ImmobiliareItUtil {
     "<script(?s)(.*)</script>".r.replaceAllIn(body,"")
   }
 
+  def getHouseJson(id: Long): JsonObject = {
+    val htmlPage = Http("https://www.immobiliare.it/annunci/" + id + "/")
+      .header("Content-Type", "text/html").header("Charset", "UTF-8")
+      .asString
+      .body
+    val openingTag = "<script type=\"application/json\" id=\"js-hydration\">"
+    val closingTag = "</script>"
+    val scriptRegex = (openingTag + "(?s)(.*)" + closingTag).r
+    val script = scriptRegex findFirstIn htmlPage getOrElse(throw new IllegalStateException("No main content script regex matched"))
+    JsonParser.parseString(script.replace(openingTag, "").replace(closingTag, "")).getAsJsonObject
+  }
+
   def extractIdSeq(url: String): Seq[Long] = {
     val htmlPage = Http(url).header("Content-Type", "text/html").header("Charset", "UTF-8").asString.body
     (idHrefPattern findAllMatchIn htmlPage).toSeq.map(idHrefMatch => extractId(idHrefMatch))
@@ -47,6 +60,12 @@ object ImmobiliareItUtil {
       }
     }
     throw new IllegalStateException("Cannot extract house date")
+  }
+
+  def extractHouseCoordinates(html: String): (Option[String], Option[String]) ={
+    val lat = "\"lat\":[0-9]*.[0-9]*".r findFirstIn html
+    val lng = "\"lng\":[0-9]*.[0-9]*".r findFirstIn html
+    (lat, lng)
   }
 
   def createHouseListUrl(city: String, i: Int): String = {

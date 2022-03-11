@@ -26,7 +26,9 @@ case class ImmobiliareIt() extends DataSource {
           idSeq = idSeq.dropRight(1)
           //TODO retrieve eventual houses to be added
         } else {
-          idSeq.foreach(id => bagOfTasks.add(ImmobiliareItTask(id)))
+          bagOfTasks.add(ImmobiliareItTask(idSeq.last))
+          canContinue = false
+          //idSeq.foreach(id => bagOfTasks.add(ImmobiliareItTask(id)))
         }
         i += 1
       }
@@ -38,8 +40,8 @@ case class ImmobiliareIt() extends DataSource {
 
 private case class ImmobiliareItTask(id: Long) extends Task {
   override def call(): Unit = {
-    val htmlPage = getHtmlString(id)
+    val json = getHouseJson(id)
 
-    println(extractHouseDate(htmlPage).toString)
+    println(json.toString)
   }
 }
