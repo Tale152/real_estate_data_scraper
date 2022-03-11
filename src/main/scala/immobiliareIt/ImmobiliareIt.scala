@@ -1,12 +1,9 @@
 package immobiliareIt
 
-import scalaj.http.Http
-
 import java.time.LocalDate
 import java.util
-import _root_.DataSource
-import _root_.Task
 import ImmobiliareItUtil._
+import scraping.{DataSource, Task}
 
 case class ImmobiliareIt() extends DataSource {
 
@@ -41,10 +38,7 @@ case class ImmobiliareIt() extends DataSource {
 
 private case class ImmobiliareItTask(id: Long) extends Task {
   override def call(): Unit = {
-    val htmlPage = Http("https://www.immobiliare.it/annunci/" + id + "/")
-      .header("Content-Type", "text/html").header("Charset", "UTF-8")
-      .asString
-      .body
+    val htmlPage = getHtmlString(id)
 
     println(extractHouseDate(htmlPage).toString)
   }

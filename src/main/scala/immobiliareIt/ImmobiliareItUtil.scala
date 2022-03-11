@@ -16,11 +16,17 @@ object ImmobiliareItUtil {
   private val dateFirstRegex = ("riferimento e Data annuncio</dt>(?s)(.*)" + date).r
   private val dateSecondRegex = date.r
   private val format = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+  private val bodyRegex = "<body(?s)(.*)</body>".r
 
-  def getHtmlString(id: Long): String = Http("https://www.immobiliare.it/annunci/" + id + "/")
-    .header("Content-Type", "text/html").header("Charset", "UTF-8")
-    .asString
-    .body
+  def getHtmlString(id: Long): String = {
+    val htmlPage = Http("https://www.immobiliare.it/annunci/" + id + "/")
+      .header("Content-Type", "text/html").header("Charset", "UTF-8")
+      .asString
+      .body
+    val bodyRegexMatch = bodyRegex findFirstIn htmlPage
+    val body = bodyRegexMatch.getOrElse(throw new IllegalStateException("No body regex matched"))
+    "<script(?s)(.*)</script>".r.replaceAllIn(body,"")
+  }
 
   def extractIdSeq(url: String): Seq[Long] = {
     val htmlPage = Http(url).header("Content-Type", "text/html").header("Charset", "UTF-8").asString.body
