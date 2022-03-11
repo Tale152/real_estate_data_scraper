@@ -3,7 +3,7 @@ package immobiliareIt
 import java.time.LocalDate
 import java.util
 import ImmobiliareItUtil._
-import com.google.gson.{GsonBuilder, JsonObject}
+import com.google.gson.JsonObject
 import scraping.{DataSource, Task}
 
 import java.io.{File, PrintWriter}
@@ -15,7 +15,7 @@ case class ImmobiliareIt() extends DataSource {
     var i = 1
     var canContinue = true
     while (canContinue){
-      println("page " + i)
+      print(".")
       var idSeq = extractIdSeq(createHouseListUrl(city, i))
       if(idSeq.isEmpty){
         canContinue = false
@@ -34,6 +34,7 @@ case class ImmobiliareIt() extends DataSource {
         i += 1
       }
     }
+    print("\n")
     bagOfTasks
   }
 
@@ -45,7 +46,6 @@ private case class ImmobiliareItTask(id: Long) extends Task {
     val date = extractHouseDate(htmlString)
     val json = getHouseJson(htmlString)
     val cleanJson = createCleanJson(date, json)
-    println(getPrettyJson(cleanJson))
     val pw = new PrintWriter(new File("./scraped/" + id + ".json"))
     pw.write(getPrettyJson(cleanJson))
     pw.close()
