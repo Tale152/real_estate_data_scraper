@@ -6,6 +6,8 @@ import ImmobiliareItUtil._
 import com.google.gson.{GsonBuilder, JsonObject}
 import scraping.{DataSource, Task}
 
+import java.io.{File, PrintWriter}
+
 case class ImmobiliareIt() extends DataSource {
 
   override def createBagOfTasks(city: String, startingFrom: LocalDate): util.HashSet[Task] = {
@@ -25,9 +27,9 @@ case class ImmobiliareIt() extends DataSource {
 
           //TODO retrieve eventual houses to be added
         } else {
-          bagOfTasks.add(ImmobiliareItTask(idSeq.last))
-          canContinue = false
-          //idSeq.foreach(id => bagOfTasks.add(ImmobiliareItTask(id)))
+          //bagOfTasks.add(ImmobiliareItTask(idSeq.last))
+          //canContinue = false
+          idSeq.foreach(id => bagOfTasks.add(ImmobiliareItTask(id)))
         }
         i += 1
       }
@@ -43,12 +45,10 @@ private case class ImmobiliareItTask(id: Long) extends Task {
     val date = extractHouseDate(htmlString)
     val json = getHouseJson(htmlString)
     val cleanJson = createCleanJson(date, json)
-    println(
-      new GsonBuilder()
-      .setPrettyPrinting()
-      .create()
-      .toJson(cleanJson)
-    )
+    println(getPrettyJson(cleanJson))
+    val pw = new PrintWriter(new File("./scraped/" + id + ".json"))
+    pw.write(getPrettyJson(cleanJson))
+    pw.close()
   }
 
   private def createCleanJson(date: LocalDate, json: JsonObject): JsonObject = {

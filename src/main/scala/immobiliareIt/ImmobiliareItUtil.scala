@@ -1,6 +1,6 @@
 package immobiliareIt
 
-import com.google.gson.{JsonObject, JsonParser}
+import com.google.gson.{GsonBuilder, JsonObject, JsonParser}
 import scalaj.http.Http
 
 import java.time.LocalDate
@@ -17,6 +17,8 @@ object ImmobiliareItUtil {
   private val dateFirstRegex = ("riferimento e Data annuncio</dt>(?s)(.*)" + date).r
   private val dateSecondRegex = date.r
   private val format = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+
+  def getPrettyJson(json: JsonObject): String = new GsonBuilder().setPrettyPrinting().create().toJson(json)
 
   def getHtmlString(id: Long): String = Http("https://www.immobiliare.it/annunci/" + id + "/")
       .header("Content-Type", "text/html").header("Charset", "UTF-8")
