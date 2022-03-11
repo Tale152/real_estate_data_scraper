@@ -6,6 +6,7 @@ import java.time.LocalDate
 import java.util
 import _root_.DataSource
 import _root_.Task
+import ImmobiliareItUtil._
 
 case class ImmobiliareIt() extends DataSource {
 
@@ -15,13 +16,13 @@ case class ImmobiliareIt() extends DataSource {
     var canContinue = true
     while (canContinue){
       println("page " + i)
-      var idSeq = ImmobiliareItUtil.extractIdSeq(createHouseListUrl(city, i))
+      var idSeq = extractIdSeq(createHouseListUrl(city, i))
       if(idSeq.isEmpty){
         canContinue = false
       } else {
         val last = idSeq.last
-        val lastHtml = ImmobiliareItUtil.getHtmlString(last)
-        val lastDate = ImmobiliareItUtil.extractHouseDate(lastHtml)
+        val lastHtml = getHtmlString(last)
+        val lastDate = extractHouseDate(lastHtml)
 
         if(lastDate.compareTo(startingFrom) < 0){
           canContinue = false
@@ -36,13 +37,6 @@ case class ImmobiliareIt() extends DataSource {
     bagOfTasks
   }
 
-  private def createHouseListUrl(city: String, i: Int): String = {
-    var res = "https://www.immobiliare.it/vendita-case/" + city + "/?criterio=dataModifica&ordine=desc"
-    if(i > 1){
-      res += "&pag=" + i
-    }
-    res
-  }
 }
 
 private case class ImmobiliareItTask(id: Long) extends Task {
@@ -52,6 +46,6 @@ private case class ImmobiliareItTask(id: Long) extends Task {
       .asString
       .body
 
-    println(ImmobiliareItUtil.extractHouseDate(htmlPage).toString)
+    println(extractHouseDate(htmlPage).toString)
   }
 }
