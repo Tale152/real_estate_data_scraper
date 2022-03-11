@@ -1,10 +1,12 @@
+package immobiliareIt
+
 import scalaj.http.Http
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import scala.util.matching.Regex
 
-object Util {
+object ImmobiliareItUtil {
 
   private val idHrefPattern = "href=\"https://www.immobiliare.it/annunci/[0-9]*/\"".r
   private val day = "(([0-2][0-9])|(3[0-1]))"
@@ -16,9 +18,9 @@ object Util {
   private val format = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
   def getHtmlString(id: Long): String = Http("https://www.immobiliare.it/annunci/" + id + "/")
-      .header("Content-Type", "text/html").header("Charset", "UTF-8")
-      .asString
-      .body
+    .header("Content-Type", "text/html").header("Charset", "UTF-8")
+    .asString
+    .body
 
   def extractIdSeq(url: String): Seq[Long] = {
     val htmlPage = Http(url).header("Content-Type", "text/html").header("Charset", "UTF-8").asString.body
@@ -32,9 +34,9 @@ object Util {
 
   def extractHouseDate(html: String): LocalDate = {
     val firstFilter = dateFirstRegex findFirstIn html
-    if(firstFilter.isDefined){
+    if (firstFilter.isDefined) {
       val secondFilter = dateSecondRegex findFirstIn firstFilter.get
-      if(secondFilter.isDefined){
+      if (secondFilter.isDefined) {
         return LocalDate.parse(secondFilter.get, format)
       }
     }
