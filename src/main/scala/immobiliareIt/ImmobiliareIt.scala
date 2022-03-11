@@ -3,6 +3,7 @@ package immobiliareIt
 import java.time.LocalDate
 import java.util
 import ImmobiliareItUtil._
+import com.google.gson.{GsonBuilder, JsonObject}
 import scraping.{DataSource, Task}
 
 case class ImmobiliareIt() extends DataSource {
@@ -17,13 +18,11 @@ case class ImmobiliareIt() extends DataSource {
       if(idSeq.isEmpty){
         canContinue = false
       } else {
-        val last = idSeq.last
-        val lastHtml = getHtmlString(last)
-        val lastDate = extractHouseDate(lastHtml)
-
+        val lastDate = extractHouseDate(getHtmlString(idSeq.last))
         if(lastDate.compareTo(startingFrom) < 0){
           canContinue = false
           idSeq = idSeq.dropRight(1)
+
           //TODO retrieve eventual houses to be added
         } else {
           bagOfTasks.add(ImmobiliareItTask(idSeq.last))
@@ -40,8 +39,27 @@ case class ImmobiliareIt() extends DataSource {
 
 private case class ImmobiliareItTask(id: Long) extends Task {
   override def call(): Unit = {
-    val json = getHouseJson(id)
+    val htmlString = getHtmlString(id)
+    val date = extractHouseDate(htmlString)
+    val json = getHouseJson(htmlString)
+    val cleanJson = createCleanJson(date, json)
+    println(
+      new GsonBuilder()
+      .setPrettyPrinting()
+      .create()
+      .toJson(cleanJson)
+    )
+  }
 
-    println(json.toString)
+  private def createCleanJson(date: LocalDate, json: JsonObject): JsonObject = {
+    val cleanJson = new JsonObject()
+    val listing = json.getAsJsonObject("listing")
+    cleanJson.addProperty("date", date.toString)
+    cleanJson.add("id", listing.get("id"))
+    cleanJson.add("contract", listing.get("contract"))
+    cleanJson.add("title", listing.get("title"))
+    val properties = listing.getAsJsonArray("properties").get(0).getAsJsonObject
+    cleanJson.add("condition", properties.getAsJsonObject("condition").get("name"))
+    cleanJson
   }
 }
