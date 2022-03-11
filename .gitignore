@@ -1,5 +1,7 @@
 project/target/
 
+scraped/
+
 ### Intellij ###
 .idea/
 out/
