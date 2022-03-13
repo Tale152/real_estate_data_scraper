@@ -17,22 +17,23 @@ case class ImmobiliareIt() extends DataSource {
     while (canContinue){
       print(".")
       var idSeq = extractIdSeq(createHouseListUrl(city, i))
-      if(idSeq.isEmpty){
-        canContinue = false
-      } else {
-        val lastDate = extractHouseDate(getHtmlString(idSeq.last))
-        if(lastDate.compareTo(startingFrom) < 0){
-          canContinue = false
-          idSeq = idSeq.dropRight(1)
 
-          //TODO retrieve eventual houses to be added
-        } else {
-          //bagOfTasks.add(ImmobiliareItTask(idSeq.last))
-          //canContinue = false
-          idSeq.foreach(id => bagOfTasks.add(ImmobiliareItTask(id)))
+      //get only one house for testing
+      //canContinue = false
+      //bagOfTasks.add(ImmobiliareItTask(idSeq.last))
+
+      //page with too old houses (or no more results) reached
+      if(idSeq.isEmpty || extractHouseDate(getHtmlString(idSeq.last)).compareTo(startingFrom) < 0){
+        canContinue = false
+        if(idSeq.nonEmpty){
+          idSeq = idSeq.dropRight(1) //removing already analyzed house (if present)
         }
-        i += 1
+        while(idSeq.nonEmpty && extractHouseDate(getHtmlString(idSeq.last)).compareTo(startingFrom) < 0){
+          idSeq = idSeq.dropRight(1) //removing too old houses
+        }
       }
+      idSeq.foreach(id => bagOfTasks.add(ImmobiliareItTask(id))) //filling bag of tasks with valid houses
+      i += 1
     }
     print("\n")
     bagOfTasks
