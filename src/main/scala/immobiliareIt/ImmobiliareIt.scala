@@ -3,7 +3,7 @@ package immobiliareIt
 import java.time.LocalDate
 import java.util
 import ImmobiliareItUtil._
-import com.google.gson.JsonObject
+import com.google.gson.{JsonElement, JsonObject}
 import scraping.{DataSource, Task}
 
 import java.io.{File, PrintWriter}
@@ -52,6 +52,28 @@ private case class ImmobiliareItTask(id: Long) extends Task {
     pw.close()
   }
 
+  private def getFromObjectHierarchy(jsonObject: JsonObject, hierarchy: String*): Option[JsonElement] = {
+    var i = 0
+    var currentObject = jsonObject
+    while(i < hierarchy.size - 1) {
+      if(hasNotNullField(currentObject, hierarchy(i))){
+        currentObject = currentObject.getAsJsonObject(hierarchy(i))
+        i += 1
+      } else {
+        return Option.empty
+      }
+    }
+
+    if(hasNotNullField(currentObject, hierarchy.last)){
+      Option(currentObject.get(hierarchy(i)))
+    } else {
+      Option.empty
+    }
+  }
+
+  private def hasNotNullField(jsonObj: JsonObject, field: String): Boolean =
+    jsonObj.has(field) && !jsonObj.get(field).isJsonNull
+
   private def createCleanJson(date: LocalDate, json: JsonObject): JsonObject = {
     val cleanJson = new JsonObject()
     val listing = json.getAsJsonObject("listing")
@@ -60,7 +82,33 @@ private case class ImmobiliareItTask(id: Long) extends Task {
     cleanJson.add("contract", listing.get("contract"))
     cleanJson.add("title", listing.get("title"))
     val properties = listing.getAsJsonArray("properties").get(0).getAsJsonObject
-    cleanJson.add("condition", properties.getAsJsonObject("condition").get("name"))
+    val condition = getFromObjectHierarchy(properties, "condition", "name")
+    if (condition.isDefined){
+      cleanJson.add("condition", condition.get)
+    }
+    val surface = "[0-9]*".r findFirstIn properties.get("surfaceValue").getAsString
+    cleanJson.addProperty("surfaceValue", surface.getOrElse(""))
+    cleanJson.add("typology", properties.getAsJsonObject("typology").get("name"))
+    cleanJson.add("category", properties.getAsJsonObject("category").get("name"))
+    val location = properties.getAsJsonObject("location")
+    cleanJson.add("location", createClearLocationJson(location))
+    cleanJson.add("price", properties.getAsJsonObject("price").get("price"))
+    cleanJson.add("energy", properties.getAsJsonObject("energy").get("class"))
     cleanJson
+  }
+
+  private def createClearLocationJson(location: JsonObject): JsonObject = {
+    val clearLocation = new JsonObject()
+    clearLocation.add("latitude", location.get("latitude"))
+    clearLocation.add("longitude", location.get("longitude"))
+    clearLocation.add("nation", location.getAsJsonObject("nation").get("name"))
+    clearLocation.add("region", location.getAsJsonObject("region").get("name"))
+    clearLocation.add("province", location.getAsJsonObject("province").get("name"))
+    clearLocation.add("city", location.getAsJsonObject("city").get("name"))
+    clearLocation.add("macrozone", location.getAsJsonObject("macrozone").get("name"))
+    clearLocation.add("locality", location.get("locality"))
+    clearLocation.add("address", location.get("address"))
+    clearLocation.add("streetNumber", location.get("streetNumber"))
+    clearLocation
   }
 }
