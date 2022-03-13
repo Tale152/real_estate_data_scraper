@@ -11,7 +11,7 @@ object Main {
       prepareResultDirectory()
       println("Generating tasks")
       val dataSource = ImmobiliareIt()
-      val bagOfTasks = dataSource.createBagOfTasks("cesena", parseDate("10/03/2022"))
+      val bagOfTasks = dataSource.createBagOfTasks("cesena", parseDate("11/03/2022"))
       println("Bag of tasks size: " + bagOfTasks.size)
       val exec: ExecutorService = Executors.newFixedThreadPool(16)
       exec.invokeAll(bagOfTasks)
