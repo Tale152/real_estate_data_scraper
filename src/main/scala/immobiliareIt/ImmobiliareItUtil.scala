@@ -1,14 +1,13 @@
 package immobiliareIt
 
 import com.google.gson.{JsonObject, JsonParser}
-import scalaj.http.Http
 import utils.{HtmlUtil, RegexUtil}
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import scala.util.matching.Regex
 
-object ImmobiliareItUtil {
+protected object ImmobiliareItUtil {
 
   private val immobiliareItUrl = "https://www.immobiliare.it/"
   private val houseUrlEnding = "/?criterio=dataModifica&ordine=desc"
