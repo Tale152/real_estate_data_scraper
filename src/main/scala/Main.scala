@@ -14,7 +14,7 @@ object Main {
 
       var executors = Seq[ExecutorService]()
       dataSource.zones.foreach(zone => {
-        log("Retrieving houses from " + argsProvider.source + " in " + zone)
+        log("Retrieving houses in " + zone)
         val bagOfTasks = dataSource.createBagOfTasks(zone, argsProvider.startingDate)
         log("Houses found in " + zone + ": " + bagOfTasks.size)
         val executor: ExecutorService = Executors.newFixedThreadPool(argsProvider.threads)
@@ -25,13 +25,10 @@ object Main {
         }).start()
       })
       println("Waiting for scraping to finish...")
-      var i = 1
       while(executors.nonEmpty){
         val e = executors.head
         executors = executors.drop(1)
         e.awaitTermination(Long.MaxValue, TimeUnit.SECONDS)
-        println(i + "/" + dataSource.zones.length)
-        i += 1
       }
       log("Scraping completed")
     }

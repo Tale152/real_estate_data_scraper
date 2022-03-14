@@ -22,28 +22,38 @@ case class ImmobiliareIt() extends DataSource {
       if(idSeq.isEmpty){
         canContinue = false
       } else {
-        val lastHtml = getHtmlString(createHouseUrl(idSeq.last))
-        if(extractHouseDate(lastHtml).compareTo(startingFrom) < 0){
-          canContinue = false
+        var lastHtml = getHtmlString(createHouseUrl(idSeq.last))
+        var lastDate = extractHouseDate(lastHtml)
+        while(lastDate.isEmpty && idSeq.nonEmpty){
           idSeq = idSeq.dropRight(1)
-          while(idSeq.nonEmpty && extractHouseDate(getHtmlString(createHouseUrl(idSeq.last))).compareTo(startingFrom) < 0){
+          lastHtml = getHtmlString(createHouseUrl(idSeq.last))
+          lastDate = extractHouseDate(lastHtml)
+        }
+        if(idSeq.isEmpty){
+          canContinue = false
+        } else {
+          if(lastDate.get.compareTo(startingFrom) < 0){
+            canContinue = false
+            idSeq = idSeq.dropRight(1)
+            while(idSeq.nonEmpty && extractHouseDate(getHtmlString(createHouseUrl(idSeq.last))).getOrElse(LocalDate.ofEpochDay(0)).compareTo(startingFrom) < 0){
+              idSeq = idSeq.dropRight(1)
+            }
+          } else {
+            bagOfTasks.add(HtmlAvailableTask(lastHtml, idSeq.last))
             idSeq = idSeq.dropRight(1)
           }
-        } else {
-          bagOfTasks.add(HtmlAvailableTask(lastHtml, idSeq.last))
-          idSeq = idSeq.dropRight(1)
         }
       }
       idSeq.foreach(id => bagOfTasks.add(CompleteTask(id))) //filling bag of tasks with valid houses
       i += 1
     }
-    println("")
     bagOfTasks
   }
 
   override def createBagOfTasks(city: String, startingFrom: LocalDate): util.HashSet[Task] = {
     val bagOfTasks = createBagOfTasksFrom(city, startingFrom, createSellingHouseListUrl)
     bagOfTasks.addAll(createBagOfTasksFrom(city, startingFrom, createRentingHouseListUrl))
+    println("")
     bagOfTasks
   }
 
@@ -54,7 +64,7 @@ case class ImmobiliareIt() extends DataSource {
   "bologna-provincia", "bolzano-provincia", "brescia-provincia", "brindisi-provincia", "cagliari-provincia",
   "caltanissetta-provincia", "campobasso-provincia", "caserta-provincia", "catania-provincia", "catanzaro-provincia",
   "chieti-provincia", "como-provincia", "cosenza-provincia", "cremona-provincia", "crotone-provincia",
-  "cuneo-provincia", "enna-provincia", "fermo-provincia", "ferrare-provincia", "firenze-provincia",
+  "cuneo-provincia", "enna-provincia", "fermo-provincia", "ferrara-provincia", "firenze-provincia",
   "foggia-provincia", "forli-cesena-provincia", "frosinone-provincia", "genova-provincia", "gorizia-provincia",
   "grosseto-provincia", "imperia-provincia", "isernia-provincia", "la-spezia-provincia", "latina-provincia",
   "lecce-provincia", "lecco-provincia", "livorno-provincia", "lodi-provincia", "lucca-provincia", "macerata-provincia",
@@ -78,9 +88,11 @@ private case class CompleteTask(id: Long) extends Task {
 private case class HtmlAvailableTask(html: String, id: Long) extends Task {
   override def call(): Unit = {
     val date = extractHouseDate(html)
-    val json = getHouseJson(html)
-    val cleanJson = createCleanJson(date, json)
-    writeFile(id, cleanJson)
+    if(date.isDefined){
+      val json = getHouseJson(html)
+      val cleanJson = createCleanJson(date.get, json)
+      writeFile(id, cleanJson)
+    }
   }
 
   private def createCleanJson(date: LocalDate, json: JsonObject): JsonObject = {

@@ -32,15 +32,15 @@ protected object ImmobiliareItUtil {
     .replace("/\"", "")
     .toLong
 
-  def extractHouseDate(html: String): LocalDate = {
+  def extractHouseDate(html: String): Option[LocalDate] = {
     val firstFilter = dateFirstRegex findFirstIn html
     if (firstFilter.isDefined) {
       val secondFilter = dateSecondRegex findFirstIn firstFilter.get
       if (secondFilter.isDefined) {
-        return LocalDate.parse(secondFilter.get, format)
+        return Option(LocalDate.parse(secondFilter.get, format))
       }
     }
-    throw new IllegalStateException("Cannot extract house date")
+    Option.empty
   }
 
   def createRentingHouseListUrl(city: String, i: Int): String = createHouseListUrl(city, i, "affitto-case/")
