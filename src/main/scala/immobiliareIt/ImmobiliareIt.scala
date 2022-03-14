@@ -3,10 +3,13 @@ package immobiliareIt
 import java.time.LocalDate
 import java.util
 import ImmobiliareItUtil._
-import com.google.gson.{JsonElement, JsonObject}
+import com.google.gson.JsonObject
 import scraping.{DataSource, Task}
+import utils.FileUtil.writeFile
+import utils.HtmlUtil.getHtmlString
 
 import java.io.{File, PrintWriter}
+import utils.JsonUtil._
 
 case class ImmobiliareIt() extends DataSource {
 
@@ -19,11 +22,11 @@ case class ImmobiliareIt() extends DataSource {
       if(idSeq.isEmpty){
         canContinue = false
       } else {
-        val lastHtml = getHtmlString(idSeq.last)
+        val lastHtml = getHtmlString(createHouseUrl(idSeq.last))
         if(extractHouseDate(lastHtml).compareTo(startingFrom) < 0){
           canContinue = false
           idSeq = idSeq.dropRight(1)
-          while(idSeq.nonEmpty && extractHouseDate(getHtmlString(idSeq.last)).compareTo(startingFrom) < 0){
+          while(idSeq.nonEmpty && extractHouseDate(getHtmlString(createHouseUrl(idSeq.last))).compareTo(startingFrom) < 0){
             idSeq = idSeq.dropRight(1)
           }
         } else {
@@ -46,7 +49,7 @@ case class ImmobiliareIt() extends DataSource {
 }
 
 private case class CompleteTask(id: Long) extends Task {
-  override def call(): Unit = HtmlAvailableTask(getHtmlString(id), id).call()
+  override def call(): Unit = HtmlAvailableTask(getHtmlString(createHouseUrl(id)), id).call()
 }
 
 private case class HtmlAvailableTask(html: String, id: Long) extends Task {
@@ -54,34 +57,8 @@ private case class HtmlAvailableTask(html: String, id: Long) extends Task {
     val date = extractHouseDate(html)
     val json = getHouseJson(html)
     val cleanJson = createCleanJson(date, json)
-    val pw = new PrintWriter(new File("./scraped/" + id + ".json"))
-    pw.write(getPrettyJson(cleanJson))
-    pw.close()
+    writeFile(id, cleanJson)
   }
-
-  private def getFromObjectHierarchy(jsonObject: JsonObject, hierarchy: Seq[String]): Option[JsonElement] = {
-    var currentObject = jsonObject
-    for (i <- 0 until hierarchy.size - 1) if (hasNotNullField(currentObject, hierarchy(i))) {
-      currentObject = currentObject.getAsJsonObject(hierarchy(i))
-    } else {
-      return Option.empty
-    }
-    if(hasNotNullField(currentObject, hierarchy.last)){
-      Option(currentObject.get(hierarchy.last))
-    } else {
-      Option.empty
-    }
-  }
-
-  private def addIfPresent(source: JsonObject, destination: JsonObject, addFieldName: String, sourceHierarchy: Seq[String]): Unit = {
-    val toPut = getFromObjectHierarchy(source, sourceHierarchy)
-    if(toPut.isDefined){
-      destination.add(addFieldName, toPut.get)
-    }
-  }
-
-  private def hasNotNullField(jsonObj: JsonObject, field: String): Boolean =
-    jsonObj.has(field) && !jsonObj.get(field).isJsonNull
 
   private def createCleanJson(date: LocalDate, json: JsonObject): JsonObject = {
     val cleanJson = new JsonObject()
