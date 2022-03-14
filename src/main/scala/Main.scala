@@ -11,13 +11,12 @@ object Main {
       val argsProvider = ArgsProvider(args)
       val dataSource: DataSource = getDataSource(argsProvider.source)
       FileUtil.prepareResultDirectory()
-      val cities = Seq("agrigento-provincia", "alessandria-provincia")
 
       var executors = Seq[ExecutorService]()
-      cities.foreach(city => {
-        log("Retrieving houses from " + argsProvider.source + " in " + city)
-        val bagOfTasks = dataSource.createBagOfTasks(city, argsProvider.startingDate)
-        log("Houses found in " + city + ": " + bagOfTasks.size)
+      dataSource.zones.foreach(zone => {
+        log("Retrieving houses from " + argsProvider.source + " in " + zone)
+        val bagOfTasks = dataSource.createBagOfTasks(zone, argsProvider.startingDate)
+        log("Houses found in " + zone + ": " + bagOfTasks.size)
         val executor: ExecutorService = Executors.newFixedThreadPool(argsProvider.threads)
         executors ++= Seq(executor)
         new Thread(() => {
@@ -31,7 +30,7 @@ object Main {
         val e = executors.head
         executors = executors.drop(1)
         e.awaitTermination(Long.MaxValue, TimeUnit.SECONDS)
-        println(i + "/" + cities.length)
+        println(i + "/" + dataSource.zones.length)
         i += 1
       }
       log("Scraping completed")

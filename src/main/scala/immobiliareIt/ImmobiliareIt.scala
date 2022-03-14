@@ -47,6 +47,28 @@ case class ImmobiliareIt() extends DataSource {
     bagOfTasks
   }
 
+  override def zones: Seq[String] = Seq("agrigento-provincia", "alessandria-provincia", "ancona-provincia",
+  "aosta-provincia", "aquila-provincia", "arezzo-provincia", "ascoli-piceno-provincia",
+  "asti-provincia", "avellino-provincia", "bari-provincia", "barletta-andria-trani-provincia",
+  "belluno-provincia", "benevento-provincia", "bergamo-provincia", "biella-provincia",
+  "bologna-provincia", "bolzano-provincia", "brescia-provincia", "brindisi-provincia", "cagliari-provincia",
+  "caltanissetta-provincia", "campobasso-provincia", "caserta-provincia", "catania-provincia", "catanzaro-provincia",
+  "chieti-provincia", "como-provincia", "cosenza-provincia", "cremona-provincia", "crotone-provincia",
+  "cuneo-provincia", "enna-provincia", "fermo-provincia", "ferrare-provincia", "firenze-provincia",
+  "foggia-provincia", "forli-cesena-provincia", "frosinone-provincia", "genova-provincia", "gorizia-provincia",
+  "grosseto-provincia", "imperia-provincia", "isernia-provincia", "la-spezia-provincia", "latina-provincia",
+  "lecce-provincia", "lecco-provincia", "livorno-provincia", "lodi-provincia", "lucca-provincia", "macerata-provincia",
+  "mantova-provincia", "massa-carrara-provincia", "matera-provincia", "messina-provincia", "milano-provincia",
+  "modena-provincia", "monza-brianza-provincia", "napoli-provincia", "novara-provincia", "nuoro-provincia",
+  "oristano-provincia", "padova-provincia", "palermo-provincia", "parma-provincia", "pavia-provincia", "perugia-provincia",
+  "pesaro-urbino-provincia", "pescara-provincia", "piacenza-provincia", "pisa-provincia", "pistoia-provincia",
+  "pordenone-provincia", "potenza-provincia", "prato-provincia", "ragusa-provincia", "ravenna-provincia",
+  "reggio-calabria-provincia", "reggio-emilia-provincia", "rieti-provincia", "rimini-provincia", "roma-provincia",
+  "rovigo-provincia", "salerno-provincia", "san-marino-provincia", "sassari-provincia", "savona-provincia",
+  "siena-provincia", "siracusa-provincia", "sondrio-provincia", "sud-sardegna-provincia", "taranto-provincia",
+  "teramo-provincia", "terni-provincia", "torino-provincia", "trapani-provincia", "trento-provincia", "treviso-provincia",
+  "trieste-provincia", "udine-provincia", "varese-provincia", "venezia-provincia", "verbania-provincia", "vercelli-provincia",
+  "verona-provincia", "vibo-valentia-provincia", "vicenza-provincia", "viterbo-provincia")
 }
 
 private case class CompleteTask(id: Long) extends Task {
