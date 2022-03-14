@@ -15,37 +15,38 @@ case class ImmobiliareIt() extends DataSource {
     var i = 1
     var canContinue = true
     while (canContinue){
-      print(".")
       var idSeq = extractIdSeq(createHouseListUrl(city, i))
-
-      //get only one house for testing
-      //canContinue = false
-      //bagOfTasks.add(ImmobiliareItTask(idSeq.last))
-
-      //page with too old houses (or no more results) reached
-      if(idSeq.isEmpty || extractHouseDate(getHtmlString(idSeq.last)).compareTo(startingFrom) < 0){
+      if(idSeq.isEmpty){
         canContinue = false
-        if(idSeq.nonEmpty){
-          idSeq = idSeq.dropRight(1) //removing already analyzed house (if present)
-        }
-        while(idSeq.nonEmpty && extractHouseDate(getHtmlString(idSeq.last)).compareTo(startingFrom) < 0){
-          idSeq = idSeq.dropRight(1) //removing too old houses
+      } else {
+        val lastHtml = getHtmlString(idSeq.last)
+        if(extractHouseDate(lastHtml).compareTo(startingFrom) < 0){
+          canContinue = false
+          idSeq = idSeq.dropRight(1)
+          while(idSeq.nonEmpty && extractHouseDate(getHtmlString(idSeq.last)).compareTo(startingFrom) < 0){
+            idSeq = idSeq.dropRight(1)
+          }
+        } else {
+          bagOfTasks.add(HtmlAvailableTask(lastHtml, idSeq.last))
+          idSeq = idSeq.dropRight(1)
         }
       }
-      idSeq.foreach(id => bagOfTasks.add(ImmobiliareItTask(id))) //filling bag of tasks with valid houses
+      idSeq.foreach(id => bagOfTasks.add(CompleteTask(id))) //filling bag of tasks with valid houses
       i += 1
     }
-    print("\n")
     bagOfTasks
   }
 
 }
 
-private case class ImmobiliareItTask(id: Long) extends Task {
+private case class CompleteTask(id: Long) extends Task {
+  override def call(): Unit = HtmlAvailableTask(getHtmlString(id), id).call()
+}
+
+private case class HtmlAvailableTask(html: String, id: Long) extends Task {
   override def call(): Unit = {
-    val htmlString = getHtmlString(id)
-    val date = extractHouseDate(htmlString)
-    val json = getHouseJson(htmlString)
+    val date = extractHouseDate(html)
+    val json = getHouseJson(html)
     val cleanJson = createCleanJson(date, json)
     val pw = new PrintWriter(new File("./scraped/" + id + ".json"))
     pw.write(getPrettyJson(cleanJson))
