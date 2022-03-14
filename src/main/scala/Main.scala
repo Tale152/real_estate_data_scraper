@@ -9,19 +9,32 @@ object Main {
 
     def main(args: Array[String]): Unit = {
       val argsProvider = ArgsProvider(args)
-      val executor: ExecutorService = Executors.newFixedThreadPool(argsProvider.threads)
       val dataSource: DataSource = getDataSource(argsProvider.source)
       FileUtil.prepareResultDirectory()
+      val cities = Seq("agrigento-provincia", "alessandria-provincia")
 
-      log("Retrieving houses from " + argsProvider.source)
-      val bagOfTasks = dataSource.createBagOfTasks("cesena", argsProvider.startingDate)
-      log("Houses found: " + bagOfTasks.size)
-      log("Scraping...")
-      executor.invokeAll(bagOfTasks)
-      executor.shutdown()
-      if(executor.awaitTermination(Long.MaxValue, TimeUnit.SECONDS)) {
-        log("Tasks completed")
+      var executors = Seq[ExecutorService]()
+      cities.foreach(city => {
+        log("Retrieving houses from " + argsProvider.source + " in " + city)
+        val bagOfTasks = dataSource.createBagOfTasks(city, argsProvider.startingDate)
+        log("Houses found in " + city + ": " + bagOfTasks.size)
+        val executor: ExecutorService = Executors.newFixedThreadPool(argsProvider.threads)
+        executors ++= Seq(executor)
+        new Thread(() => {
+          executor.invokeAll(bagOfTasks)
+          executor.shutdown()
+        }).start()
+      })
+      println("Waiting for scraping to finish...")
+      var i = 1
+      while(executors.nonEmpty){
+        val e = executors.head
+        executors = executors.drop(1)
+        e.awaitTermination(Long.MaxValue, TimeUnit.SECONDS)
+        println(i + "/" + cities.length)
+        i += 1
       }
+      log("Scraping completed")
     }
 
     private def getDataSource(s: String): DataSource = s match {

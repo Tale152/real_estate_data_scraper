@@ -17,6 +17,7 @@ case class ImmobiliareIt() extends DataSource {
     var i = 1
     var canContinue = true
     while (canContinue){
+      print(".")
       var idSeq = extractIdSeq(sourceGenerator(city, i))
       if(idSeq.isEmpty){
         canContinue = false
@@ -36,6 +37,7 @@ case class ImmobiliareIt() extends DataSource {
       idSeq.foreach(id => bagOfTasks.add(CompleteTask(id))) //filling bag of tasks with valid houses
       i += 1
     }
+    println("")
     bagOfTasks
   }
 
