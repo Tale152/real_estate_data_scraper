@@ -52,7 +52,7 @@ private case class ImmobiliareItTask(id: Long) extends Task {
     pw.close()
   }
 
-  private def getFromObjectHierarchy(jsonObject: JsonObject, hierarchy: String*): Option[JsonElement] = {
+  private def getFromObjectHierarchy(jsonObject: JsonObject, hierarchy: Seq[String]): Option[JsonElement] = {
     var currentObject = jsonObject
     for (i <- 0 until hierarchy.size - 1) if (hasNotNullField(currentObject, hierarchy(i))) {
       currentObject = currentObject.getAsJsonObject(hierarchy(i))
@@ -66,44 +66,58 @@ private case class ImmobiliareItTask(id: Long) extends Task {
     }
   }
 
+  private def addIfPresent(source: JsonObject, destination: JsonObject, addFieldName: String, sourceHierarchy: Seq[String]): Unit = {
+    val toPut = getFromObjectHierarchy(source, sourceHierarchy)
+    if(toPut.isDefined){
+      destination.add(addFieldName, toPut.get)
+    }
+  }
+
   private def hasNotNullField(jsonObj: JsonObject, field: String): Boolean =
     jsonObj.has(field) && !jsonObj.get(field).isJsonNull
 
   private def createCleanJson(date: LocalDate, json: JsonObject): JsonObject = {
     val cleanJson = new JsonObject()
-    val listing = json.getAsJsonObject("listing")
     cleanJson.addProperty("date", date.toString)
-    cleanJson.add("id", listing.get("id"))
-    cleanJson.add("contract", listing.get("contract"))
-    cleanJson.add("title", listing.get("title"))
-    val properties = listing.getAsJsonArray("properties").get(0).getAsJsonObject
-    val condition = getFromObjectHierarchy(properties, "condition", "name")
-    if (condition.isDefined){
-      cleanJson.add("condition", condition.get)
+    if(hasNotNullField(json, "listing")){
+      val listing = json.getAsJsonObject("listing")
+      addIfPresent(listing, cleanJson, "id", Seq("id"))
+      addIfPresent(listing, cleanJson, "contract", Seq("contract"))
+      addIfPresent(listing, cleanJson, "title", Seq("title"))
+      if(hasNotNullField(listing, "properties")){
+        val propertiesArray = listing.getAsJsonArray("properties")
+        if(propertiesArray.size() > 0){
+          val properties = propertiesArray.get(0).getAsJsonObject
+          addIfPresent(properties, cleanJson, "condition", Seq("condition", "name"))
+          addIfPresent(properties, cleanJson, "typology", Seq("typology", "name"))
+          addIfPresent(properties, cleanJson, "category", Seq("category", "name"))
+          addIfPresent(properties, cleanJson, "price", Seq("price", "price"))
+          addIfPresent(properties, cleanJson, "energy", Seq("energy", "class"))
+          cleanJson.add("location", createClearLocationJson(properties))
+
+          val surface = "[0-9]*".r findFirstIn properties.get("surfaceValue").getAsString
+          cleanJson.addProperty("surfaceValue", surface.getOrElse(""))
+        }
+      }
     }
-    val surface = "[0-9]*".r findFirstIn properties.get("surfaceValue").getAsString
-    cleanJson.addProperty("surfaceValue", surface.getOrElse(""))
-    cleanJson.add("typology", properties.getAsJsonObject("typology").get("name"))
-    cleanJson.add("category", properties.getAsJsonObject("category").get("name"))
-    val location = properties.getAsJsonObject("location")
-    cleanJson.add("location", createClearLocationJson(location))
-    cleanJson.add("price", properties.getAsJsonObject("price").get("price"))
-    cleanJson.add("energy", properties.getAsJsonObject("energy").get("class"))
     cleanJson
   }
 
-  private def createClearLocationJson(location: JsonObject): JsonObject = {
+  private def createClearLocationJson(properties: JsonObject): JsonObject = {
     val clearLocation = new JsonObject()
-    clearLocation.add("latitude", location.get("latitude"))
-    clearLocation.add("longitude", location.get("longitude"))
-    clearLocation.add("nation", location.getAsJsonObject("nation").get("name"))
-    clearLocation.add("region", location.getAsJsonObject("region").get("name"))
-    clearLocation.add("province", location.getAsJsonObject("province").get("name"))
-    clearLocation.add("city", location.getAsJsonObject("city").get("name"))
-    clearLocation.add("macrozone", location.getAsJsonObject("macrozone").get("name"))
-    clearLocation.add("locality", location.get("locality"))
-    clearLocation.add("address", location.get("address"))
-    clearLocation.add("streetNumber", location.get("streetNumber"))
+    if(hasNotNullField(properties, "location")){
+      val location = properties.getAsJsonObject("location")
+      addIfPresent(location, clearLocation, "latitude", Seq("latitude"))
+      addIfPresent(location, clearLocation, "longitude", Seq("longitude"))
+      addIfPresent(location, clearLocation, "nation", Seq("nation", "name"))
+      addIfPresent(location, clearLocation, "region", Seq("region", "name"))
+      addIfPresent(location, clearLocation, "province", Seq("province", "name"))
+      addIfPresent(location, clearLocation, "city", Seq("city", "name"))
+      addIfPresent(location, clearLocation, "macrozone", Seq("macrozone", "name"))
+      addIfPresent(location, clearLocation, "locality", Seq("locality"))
+      addIfPresent(location, clearLocation, "address", Seq("address"))
+      addIfPresent(location, clearLocation, "streetNumber", Seq("streetNumber"))
+    }
     clearLocation
   }
 }
