@@ -53,19 +53,14 @@ private case class ImmobiliareItTask(id: Long) extends Task {
   }
 
   private def getFromObjectHierarchy(jsonObject: JsonObject, hierarchy: String*): Option[JsonElement] = {
-    var i = 0
     var currentObject = jsonObject
-    while(i < hierarchy.size - 1) {
-      if(hasNotNullField(currentObject, hierarchy(i))){
-        currentObject = currentObject.getAsJsonObject(hierarchy(i))
-        i += 1
-      } else {
-        return Option.empty
-      }
+    for (i <- 0 until hierarchy.size - 1) if (hasNotNullField(currentObject, hierarchy(i))) {
+      currentObject = currentObject.getAsJsonObject(hierarchy(i))
+    } else {
+      return Option.empty
     }
-
     if(hasNotNullField(currentObject, hierarchy.last)){
-      Option(currentObject.get(hierarchy(i)))
+      Option(currentObject.get(hierarchy.last))
     } else {
       Option.empty
     }
