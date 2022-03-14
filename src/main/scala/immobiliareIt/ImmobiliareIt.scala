@@ -10,12 +10,12 @@ import java.io.{File, PrintWriter}
 
 case class ImmobiliareIt() extends DataSource {
 
-  override def createBagOfTasks(city: String, startingFrom: LocalDate): util.HashSet[Task] = {
+  private def createBagOfTasksFrom(city: String, startingFrom: LocalDate, sourceGenerator: (String, Int) => String): util.HashSet[Task] = {
     val bagOfTasks = new util.HashSet[Task]()
     var i = 1
     var canContinue = true
     while (canContinue){
-      var idSeq = extractIdSeq(createHouseListUrl(city, i))
+      var idSeq = extractIdSeq(sourceGenerator(city, i))
       if(idSeq.isEmpty){
         canContinue = false
       } else {
@@ -34,6 +34,12 @@ case class ImmobiliareIt() extends DataSource {
       idSeq.foreach(id => bagOfTasks.add(CompleteTask(id))) //filling bag of tasks with valid houses
       i += 1
     }
+    bagOfTasks
+  }
+
+  override def createBagOfTasks(city: String, startingFrom: LocalDate): util.HashSet[Task] = {
+    val bagOfTasks = createBagOfTasksFrom(city, startingFrom, createSellingHouseListUrl)
+    bagOfTasks.addAll(createBagOfTasksFrom(city, startingFrom, createRentingHouseListUrl))
     bagOfTasks
   }
 

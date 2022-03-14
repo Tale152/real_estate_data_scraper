@@ -54,7 +54,15 @@ object ImmobiliareItUtil {
     throw new IllegalStateException("Cannot extract house date")
   }
 
-  def createHouseListUrl(city: String, i: Int): String = {
+  def createRentingHouseListUrl(city: String, i: Int): String = {
+    var res = "https://www.immobiliare.it/affitto-case/" + city + "/?criterio=dataModifica&ordine=desc"
+    if(i > 1){
+      res += "&pag=" + i
+    }
+    res
+  }
+
+  def createSellingHouseListUrl(city: String, i: Int): String = {
     var res = "https://www.immobiliare.it/vendita-case/" + city + "/?criterio=dataModifica&ordine=desc"
     if(i > 1){
       res += "&pag=" + i
