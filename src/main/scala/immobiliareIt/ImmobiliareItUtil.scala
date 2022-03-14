@@ -2,6 +2,7 @@ package immobiliareIt
 
 import com.google.gson.{JsonObject, JsonParser}
 import scalaj.http.Http
+import utils.{HtmlUtil, RegexUtil}
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -9,15 +10,12 @@ import scala.util.matching.Regex
 
 object ImmobiliareItUtil {
 
+  private val immobiliareItUrl = "https://www.immobiliare.it/"
+  private val houseUrlEnding = "/?criterio=dataModifica&ordine=desc"
   private val idHrefPattern = "href=\"https://www.immobiliare.it/annunci/[0-9]*/\"".r
-  private val day = "(([0-2][0-9])|(3[0-1]))"
-  private val month = "((0[0-9])|(1[0-2]))"
-  private val year = "((19[0-9][0-9])|(20[0-9][0-9]))"
-  private val date = day + "/" + month + "/" + year
-  private val dateFirstRegex = ("riferimento e Data annuncio</dt>(?s)(.*)" + date).r
-  private val dateSecondRegex = date.r
+  private val dateFirstRegex = ("riferimento e Data annuncio</dt>(?s)(.*)" + RegexUtil.date).r
+  private val dateSecondRegex = RegexUtil.date.r
   private val format = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-
 
   def getHouseJson(htmlPage: String): JsonObject = {
     val openingTag = "<script type=\"application/json\" id=\"js-hydration\">"
@@ -27,13 +25,11 @@ object ImmobiliareItUtil {
     JsonParser.parseString(script.replace(openingTag, "").replace(closingTag, "")).getAsJsonObject
   }
 
-  def extractIdSeq(url: String): Seq[Long] = {
-    val htmlPage = Http(url).header("Content-Type", "text/html").header("Charset", "UTF-8").asString.body
-    (idHrefPattern findAllMatchIn htmlPage).toSeq.map(idHrefMatch => extractId(idHrefMatch))
-  }
+  def extractIdSeq(url: String): Seq[Long] =
+    (idHrefPattern findAllMatchIn HtmlUtil.getHtmlString(url)).toSeq.map(idHrefMatch => extractId(idHrefMatch))
 
   private def extractId(href: Regex.Match): Long = href.toString()
-    .replace("href=\"https://www.immobiliare.it/annunci/", "")
+    .replace("href=\"" + immobiliareItUrl + "annunci/", "")
     .replace("/\"", "")
     .toLong
 
@@ -48,22 +44,18 @@ object ImmobiliareItUtil {
     throw new IllegalStateException("Cannot extract house date")
   }
 
-  def createRentingHouseListUrl(city: String, i: Int): String = {
-    var res = "https://www.immobiliare.it/affitto-case/" + city + "/?criterio=dataModifica&ordine=desc"
+  def createRentingHouseListUrl(city: String, i: Int): String = createHouseListUrl(city, i, "affitto-case/")
+
+  def createSellingHouseListUrl(city: String, i: Int): String = createHouseListUrl(city, i, "vendita-case/")
+
+  private def createHouseListUrl(city: String, i: Int, contractType: String): String = {
+    var res = immobiliareItUrl + contractType + city + houseUrlEnding
     if(i > 1){
       res += "&pag=" + i
     }
     res
   }
 
-  def createSellingHouseListUrl(city: String, i: Int): String = {
-    var res = "https://www.immobiliare.it/vendita-case/" + city + "/?criterio=dataModifica&ordine=desc"
-    if(i > 1){
-      res += "&pag=" + i
-    }
-    res
-  }
-
-  def createHouseUrl(id: Long): String = "https://www.immobiliare.it/annunci/" + id + "/"
+  def createHouseUrl(id: Long): String = immobiliareItUrl + "annunci/" + id + "/"
 
 }
