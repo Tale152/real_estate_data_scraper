@@ -8,7 +8,6 @@ import scraping.{DataSource, Task}
 import utils.FileUtil.writeFile
 import utils.HtmlUtil.getHtmlString
 
-import java.io.{File, PrintWriter}
 import utils.JsonUtil._
 
 case class ImmobiliareIt() extends DataSource {
