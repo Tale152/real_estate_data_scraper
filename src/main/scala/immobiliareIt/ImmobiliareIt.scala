@@ -56,7 +56,7 @@ case class ImmobiliareIt() extends DataSource {
     bagOfTasks
   }
 
-  override def zones: Seq[String] = Seq("agrigento-provincia", "alessandria-provincia", "ancona-provincia",
+  override def zones: Seq[String] = Seq("agrigento-provincia", "alessandria-provincia"/*, "ancona-provincia",
   "aosta-provincia", "aquila-provincia", "arezzo-provincia", "ascoli-piceno-provincia",
   "asti-provincia", "avellino-provincia", "bari-provincia", "barletta-andria-trani-provincia",
   "belluno-provincia", "benevento-provincia", "bergamo-provincia", "biella-provincia",
@@ -77,7 +77,7 @@ case class ImmobiliareIt() extends DataSource {
   "siena-provincia", "siracusa-provincia", "sondrio-provincia", "sud-sardegna-provincia", "taranto-provincia",
   "teramo-provincia", "terni-provincia", "torino-provincia", "trapani-provincia", "trento-provincia", "treviso-provincia",
   "trieste-provincia", "udine-provincia", "varese-provincia", "venezia-provincia", "verbania-provincia", "vercelli-provincia",
-  "verona-provincia", "vibo-valentia-provincia", "vicenza-provincia", "viterbo-provincia")
+  "verona-provincia", "vibo-valentia-provincia", "vicenza-provincia", "viterbo-provincia"*/)
 }
 
 private case class CompleteTask(id: Long) extends Task {
@@ -100,7 +100,7 @@ private case class HtmlAvailableTask(html: String) extends Task {
     if(hasNotNullField(json, "listing")){
       val listing = json.getAsJsonObject("listing")
       addIfPresent(listing, cleanJson, "id", Seq("id"))
-      addIfPresent(listing, cleanJson, "contract", Seq("contract"))
+      addIfPresent(listing, cleanJson, "contract", Seq("contract", "name"))
       addIfPresent(listing, cleanJson, "title", Seq("title"))
       if(hasNotNullField(listing, "properties")){
         val propertiesArray = listing.getAsJsonArray("properties")
