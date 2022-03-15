@@ -4,10 +4,9 @@ import java.time.LocalDate
 import java.util
 import ImmobiliareItUtil._
 import com.google.gson.JsonObject
-import scraping.{DataSource, Task}
-import utils.FileUtil.writeFile
+import scraping.{DataSource, ResultsHandler, Task}
 import utils.HtmlUtil.getHtmlString
-
+import utils.JsonUtil
 import utils.JsonUtil._
 
 case class ImmobiliareIt() extends DataSource {
@@ -39,7 +38,7 @@ case class ImmobiliareIt() extends DataSource {
               idSeq = idSeq.dropRight(1)
             }
           } else {
-            bagOfTasks.add(HtmlAvailableTask(lastHtml, idSeq.last))
+            bagOfTasks.add(HtmlAvailableTask(lastHtml))
             idSeq = idSeq.dropRight(1)
           }
         }
@@ -82,16 +81,16 @@ case class ImmobiliareIt() extends DataSource {
 }
 
 private case class CompleteTask(id: Long) extends Task {
-  override def call(): Unit = HtmlAvailableTask(getHtmlString(createHouseUrl(id)), id).call()
+  override def call(): Unit = HtmlAvailableTask(getHtmlString(createHouseUrl(id))).call()
 }
 
-private case class HtmlAvailableTask(html: String, id: Long) extends Task {
+private case class HtmlAvailableTask(html: String) extends Task {
   override def call(): Unit = {
     val date = extractHouseDate(html)
     if(date.isDefined){
       val json = getHouseJson(html)
       val cleanJson = createCleanJson(date.get, json)
-      writeFile(id, cleanJson)
+      ResultsHandler.put(JsonUtil.getPrettyJson(cleanJson))
     }
   }
 

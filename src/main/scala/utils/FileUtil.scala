@@ -1,14 +1,13 @@
 package utils
 
-import com.google.gson.JsonObject
-import utils.JsonUtil.getPrettyJson
 import utils.Log.log
 
-import java.io.{File, PrintWriter}
+import java.io.{File, FileWriter}
 
 object FileUtil {
 
   private val path = "./scraped"
+  private var fileWriter: Option[FileWriter] = Option.empty
 
   def prepareResultDirectory(): Unit = {
     val resDirectory = new File(path)
@@ -16,13 +15,17 @@ object FileUtil {
       resDirectory.mkdir()
       log("Created result directory " + path)
     }
-    resDirectory.listFiles.foreach(f => f.delete)
-    log("Cleaned result directory " + path)
+    val millis = System.currentTimeMillis()
+    fileWriter = Option(new FileWriter(path + "/" + millis + ".json"))
+    fileWriter.get.write("[")
   }
 
-  def writeFile(id: Long, json: JsonObject) : Unit = {
-    val pw = new PrintWriter(new File(path + "/" + id + ".json"))
-    pw.write(getPrettyJson(json))
-    pw.close()
+  def appendFile(content: String): Unit = {
+    fileWriter.get.append(content)
+  }
+
+  def closeFile(): Unit = {
+    fileWriter.get.append("]")
+    fileWriter.get.close()
   }
 }

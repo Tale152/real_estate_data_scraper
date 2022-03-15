@@ -1,5 +1,5 @@
 import immobiliareIt.ImmobiliareIt
-import scraping.DataSource
+import scraping.{DataSource, ResultsHandler}
 import utils.{ArgsProvider, FileUtil, Sources}
 import utils.Log.log
 
@@ -30,6 +30,8 @@ object Main {
         executors = executors.drop(1)
         e.awaitTermination(Long.MaxValue, TimeUnit.SECONDS)
       }
+      ResultsHandler.complete()
+      FileUtil.closeFile()
       log("Scraping completed")
     }
 
