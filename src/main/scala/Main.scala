@@ -1,7 +1,6 @@
 import immobiliareIt.ImmobiliareIt
 import scraping.{DataSource, ResultsHandler, ScrapingExecutors}
 import utils.{ArgsProvider, FileUtil, Sources}
-import utils.Log.log
 
 object Main {
 
@@ -12,7 +11,7 @@ object Main {
       ScrapingExecutors(dataSource, argsProvider.startingDate, argsProvider.threads).startScraping()
       ResultsHandler.complete()
       FileUtil.closeFile()
-      log("Scraping completed")
+      println("Scraping completed")
     }
 
     private def getDataSource(s: String): DataSource = s match {

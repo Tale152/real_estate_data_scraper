@@ -1,7 +1,5 @@
 package utils
 
-import utils.Log.log
-
 import java.io.{File, FileWriter}
 
 object FileUtil {
@@ -13,7 +11,7 @@ object FileUtil {
     val resDirectory = new File(path)
     if(!resDirectory.exists()){
       resDirectory.mkdir()
-      log("Created result directory " + path)
+      println("Created result directory " + path)
     }
     val millis = System.currentTimeMillis()
     fileWriter = Option(new FileWriter(path + "/" + millis + ".json"))
